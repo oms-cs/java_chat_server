@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.time.LocalDateTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,6 +16,8 @@ public class Client extends Thread{
     private TCPServer tcpServer;
     private BufferedReader reader;
     private OutputStream writer;
+    private LocalDateTime lastMessage;
+    private int strikeCount;
 
     private static final Logger logger = Logger.getLogger("Client");
 
@@ -24,6 +27,24 @@ public class Client extends Thread{
         this.tcpServer = tcpServer;
         this.reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         this.writer = conn.getOutputStream();
+        this.strikeCount = 0;
+        this.lastMessage = LocalDateTime.now();
+    }
+
+    public int getStrikeCount() {
+        return strikeCount;
+    }
+
+    public void setStrikeCount(int strikeCount) {
+        this.strikeCount = strikeCount;
+    }
+
+    public LocalDateTime getLastMessage() {
+        return lastMessage;
+    }
+
+    public void setLastMessage(LocalDateTime lastMessage) {
+        this.lastMessage = lastMessage;
     }
 
     public String getClientIp() {
@@ -40,11 +61,11 @@ public class Client extends Thread{
         try {
             String message;
             while((message = reader.readLine()) != null) {
-                logger.log(Level.INFO, "Received Message from Client : "+message);
+                logger.log(Level.INFO, "Received Message from Client : "+ message);
                 if (message.equalsIgnoreCase(":quit")) {
                     this.conn.close();
                 }
-                this.tcpServer.handleMessages(this.conn, message + "\n");
+                this.tcpServer.handleMessages(this, message + "\n");
             }
             logger.log(Level.INFO, "Post While Looop!");
         } catch (IOException e) {
